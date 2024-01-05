@@ -15,6 +15,6 @@
 #define MAIN_H
 
 // add error handling function
-int connect(int lab_number, int machine_number);
+int connect_labs(char* lab, int machine_number);
 
 #endif
