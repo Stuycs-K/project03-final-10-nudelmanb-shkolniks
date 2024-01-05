@@ -14,7 +14,10 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-// add error handling function
-int connect_labs(char* lab, int machine_number);
+#define BUFFER_SIZE 1024
+
+void err(); //may add with parameters
+int connect_labs(char* lab, int machine_number, char* user);
+
 
 #endif
