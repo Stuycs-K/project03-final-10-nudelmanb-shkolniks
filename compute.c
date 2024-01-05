@@ -1,6 +1,7 @@
 #include <stdio.h>
 //#include <gmp.h>
 #include "compute.h"
+#include "spng.h"
 
 // iterate z^2 + c iterations times
 int iterate(int iterations, struct complex* z, struct complex* c) {
