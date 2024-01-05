@@ -9,7 +9,7 @@ main: main.out
 lab: lab.out
 	@./lab.out $(ARGS)
 
-main.o: main.c 
+main.o: main.c main.h
 	@gcc -c main.c -Wall
 
 lab.o: lab.c
