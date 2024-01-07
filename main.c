@@ -32,8 +32,10 @@ int connect_labs(char* lab, int machine_number, char* user){
     strcat(sshprompt, IP);
 
     args[1] = sshprompt;
-    args[2] = "cd Desktop/project03-final-10-nudelmanb-shkolniks;./lab";
-    args[3] = NULL;
+    args[2] = "-o";
+    args[3] = "StrictHostKeyChecking=no";
+    args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks;./lab";
+    args[5] = NULL;
 
     printf("%s", sshprompt);
     execvp(args[0], args);
@@ -43,5 +45,21 @@ int connect_labs(char* lab, int machine_number, char* user){
 
 
 int main(int argc, char *argv[]){
-    connect_labs("161", 1, "bnudelman40");
+    int machines = 14;
+    int f = 1;
+    int current_machine = 0;
+    for(int i=1; i <= machines; i++){
+        if(f > 0){
+            current_machine = i;
+            f = fork();
+        }
+        else{
+            break;
+        }
+    }
+    if(f == 0){
+        printf("machine %d: \n", current_machine);
+        connect_labs("161", current_machine, "bnudelman40");
+    }
+    return 0;
 }
