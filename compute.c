@@ -1,7 +1,7 @@
 #include <stdio.h>
 //#include <gmp.h>
 #include "compute.h"
-#include "spng.h"
+#include "libattopng.h"
 
 // iterate z^2 + c iterations times
 int iterate(int iterations, struct complex* z, struct complex* c) {
@@ -62,9 +62,25 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
   return -1;
 }
 
-int main() {
-  for (double i = 1; i > -1; i -= .05) {
-    for (double r = -1.5; r < .5; r += .05) {
+#define RGBA(r, g, b, a) ((r) | ((g) << 8) | ((b) << 16) | ((a) << 24))
+#define RGB(r, g, b) RGBA(r, g, b, 0xff)
+
+void render_image(double i_center, double r_center, double radius, int iterations, int* palette, char* out_name) {
+  int size_r = 1024;
+  int size_i = 1024;
+
+  libattopng_t* png = libattopng_new(size_r, size_i, PNG_RGB);
+
+  double i_min = i_center - radius;
+  double i_max = i_center + radius;
+  double r_min = r_center - radius;
+  double r_max = r_center + radius; 
+  
+  for (int ic = 0; ic < size_i; ic++) {
+    for (int rc = 0; rc < size_r; rc++) {
+      double i = i_max + ((i_min - i_max) * ic) / size_i;
+      double r = r_min + ((r_max - r_min) * rc) / size_r;
+
       struct complex z;
       z.r = 0;
       z.i = 0;
@@ -73,13 +89,62 @@ int main() {
       c.r = r;
       c.i = i;
 
-      if (iterate(1000, &z, &c) == -1) {
-        printf("*");
+      int count = iterate(iterations, &z, &c);
+
+      if (count == -1) {
+        libattopng_set_pixel(png, rc, ic, RGB(0, 0, 0));
       } else {
-        printf(" ");
+        //double percent = (double)count / iterations;
+
+        //libattopng_set_pixel(png, rc, ic, palette[(int)(percent * 255)]);
+        libattopng_set_pixel(png, rc, ic, palette[count % 255]);
+        //libattopng_set_pixel(png, rc, ic, 0);
       }
     }
+  }
 
-    printf("\n");
+  libattopng_save(png, out_name);
+  libattopng_destroy(png);
+}
+
+int main() {
+  double i_center = -.000000129; //-0.00010068; //-0.000619183;
+  double r_center = -1.401189381; //-1.512574012; //-1.448360033;
+  int iterations = 1000;
+  double radius = 2;
+
+  int palette[255];
+  for (int i = 0; i < 255; i++) {
+    int r, g, b;
+
+    if (i < 32) {
+        r = i * 8;
+        g = i * 8;
+        b = 127 - i * 4;
+    } else if (i < 128) {
+        r = 255;
+        g = 255 - (i - 32) * 8 / 3;
+        b = (i - 32) * 4 / 3;
+    } else if (i < 192) {
+        r = 255 - (i - 128) * 4;
+        g = 0 + (i - 128) * 3;
+        b = 127 - (i - 128);
+    } else {
+        r = 0;
+        g = 192 - (i - 192) * 3;
+        b = 64 + (i - 192);
+    }
+
+    palette[i] = RGB(r, g, b);
+  }
+
+  for (int i = 0; i < 100; i++) {
+    char png_name_buf[32];
+    sprintf(png_name_buf, "%d.png", i);
+    printf("Writing %s\n", png_name_buf);
+
+    render_image(i_center, r_center, radius, iterations, palette, png_name_buf);
+
+    radius /= 1.25; //1.1;
   }
 }

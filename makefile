@@ -1,14 +1,14 @@
 run: compile
 	@./compute
 
-compile: compute.o spng.o
-	@gcc -o compute compute.o spng.o
+compile: compute.o libattopng.o
+	@gcc -o compute compute.o libattopng.o
 
 compute.o: compute.c compute.h
 	@gcc -c compute.c
 
-spng.o: spng.c spng.h
-	@gcc -c spng.c
+libattopng.o: libattopng.c libattopng.h
+	@gcc -c libattopng.c
 
 clean:
-	@rm -f compute *.o
+	@rm -f compute *.o *.png
