@@ -43,6 +43,46 @@ int connect_labs(char* lab, int machine_number, char* user){
     return 0; //0 for functional, yet to add conditions
 }
 
+/*Create and bind a socket.
+* Place the socket in a listening state.
+* Connect to the client and return the client socket identifier
+*/
+int server_lab_connect() {
+  //setup structs for getaddrinfo
+  struct addrinfo * hints, * results;
+  hints = calloc(1,sizeof(struct addrinfo));
+  hints->ai_family = AF_INET;
+  hints->ai_socktype = SOCK_STREAM; 
+  hints->ai_flags = AI_PASSIVE; 
+  getaddrinfo(NULL, "1738", hints, &results);
+  //create the socket
+  int clientd;//store the socket descriptor here
+	clientd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+
+  //this code should get around the address in use error
+  int yes = 1;
+  int sockOpt =  setsockopt(clientd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+  err(sockOpt, "sockopt error");
+  
+  //bind the socket to address and port
+  bind(clientd, results->ai_addr, results->ai_addrlen);
+  //set socket to listen state
+  listen(clientd, 10);
+
+  //free the structs used by getaddrinfo
+  free(hints);
+  freeaddrinfo(results);
+  
+  int client_socket;
+
+  socklen_t sock_size;
+  struct sockaddr_storage client_address;
+  sock_size = sizeof(client_address);
+  //accept the client connection
+  client_socket = accept(clientd,(struct sockaddr *) &client_address, &sock_size);
+
+  return client_socket;
+}
 
 int main(int argc, char *argv[]){
     int machines = 14;
@@ -60,6 +100,7 @@ int main(int argc, char *argv[]){
     if(f == 0){
         printf("machine %d: \n", current_machine);
         connect_labs("161", current_machine, "bnudelman40");
+        //have to get out of ssh here and connect to the network
     }
     return 0;
 }

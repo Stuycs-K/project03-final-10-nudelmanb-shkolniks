@@ -18,6 +18,6 @@
 
 void err(); //may add with parameters
 int connect_labs(char* lab, int machine_number, char* user);
-
+int server_lab_connect();
 
 #endif
