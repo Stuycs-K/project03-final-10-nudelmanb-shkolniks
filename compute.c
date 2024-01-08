@@ -72,7 +72,8 @@ void render_image(double i_center, double r_center, double radius, int iteration
   int size_r = 512;
   int size_i = 512;
 
-  libattopng_t* png = libattopng_new(size_r, size_i, PNG_RGB);
+  libattopng_t* png = libattopng_new(size_r, size_i, PNG_PALETTE);
+  libattopng_set_palette(png, palette, 256);
 
   double i_min = i_center - radius;
   double i_max = i_center + radius;
@@ -95,13 +96,9 @@ void render_image(double i_center, double r_center, double radius, int iteration
       int count = iterate(iterations, &z, &c);
 
       if (count == -1) {
-        libattopng_set_pixel(png, rc, ic, RGB(0, 0, 0));
+        libattopng_set_pixel(png, rc, ic, 0);
       } else {
-        //double percent = (double)count / iterations;
-
-        //libattopng_set_pixel(png, rc, ic, palette[(int)(percent * 255)]);
-        libattopng_set_pixel(png, rc, ic, palette[count % 255]);
-        //libattopng_set_pixel(png, rc, ic, 0);
+        libattopng_set_pixel(png, rc, ic, 1 + count % 255);
       }
     }
   }
@@ -119,7 +116,8 @@ int main() {
   int iterations = 2000;
   double radius = 2;
 
-  int palette[255];
+  int palette[256];
+  palette[0] = RGB(0, 0, 0);
   for (int i = 0; i < 255; i++) {
     int r, g, b;
 
@@ -141,11 +139,11 @@ int main() {
         b = 64 + (i - 192);
     }
 
-    palette[i] = RGB(r, g, b);
+    palette[i + 1] = RGB(r, g, b);
   }
 
   int NUM_CHILDREN = 8;
-  int NUM_IMAGES = 170;
+  int NUM_IMAGES = 10; //170;
 
   for (int childID = 0; childID < NUM_CHILDREN; childID++) {
     if (fork() == 0) {
