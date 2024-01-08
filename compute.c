@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 //#include <gmp.h>
 #include "compute.h"
 #include "libattopng.h"
@@ -24,8 +27,8 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
     mpf_add(mag, r_copy); //mag += r_copy
     mpf_add(mag, i_copy); //mag += i_copy
 
-    if (mpf_cmp_ui(mag, 2) >= 0) {
-      return i;
+    if (mpf_cmp_ui(mag, 2 * 2) >= 0) {
+      return i + 1;
     }
 
     mpf_sub(r_copy, r_copy, i_copy); //r_copy -= i_copy
@@ -54,7 +57,7 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
     z->r = r_copy + c->r;
     z->i = i_copy + c->i;
 
-    if (z->r * z->r + z->i * z->i >= 2) {
+    if (z->r * z->r + z->i * z->i >= 2 * 2) {
       return i + 1;
     }
   }
@@ -66,8 +69,8 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
 #define RGB(r, g, b) RGBA(r, g, b, 0xff)
 
 void render_image(double i_center, double r_center, double radius, int iterations, int* palette, char* out_name) {
-  int size_r = 1024;
-  int size_i = 1024;
+  int size_r = 512;
+  int size_i = 512;
 
   libattopng_t* png = libattopng_new(size_r, size_i, PNG_RGB);
 
@@ -108,9 +111,12 @@ void render_image(double i_center, double r_center, double radius, int iteration
 }
 
 int main() {
-  double i_center = -.000000129; //-0.00010068; //-0.000619183;
-  double r_center = -1.401189381; //-1.512574012; //-1.448360033;
-  int iterations = 1000;
+  double i_center = 0.022143087552935;
+  //double i_center = -0.004012241; 
+  double r_center = -1.627637309835029;
+  //double r_center = -1.399885757;
+
+  int iterations = 2000;
   double radius = 2;
 
   int palette[255];
@@ -138,13 +144,31 @@ int main() {
     palette[i] = RGB(r, g, b);
   }
 
-  for (int i = 0; i < 100; i++) {
-    char png_name_buf[32];
-    sprintf(png_name_buf, "%d.png", i);
-    printf("Writing %s\n", png_name_buf);
+  int NUM_CHILDREN = 8;
+  int NUM_IMAGES = 170;
 
-    render_image(i_center, r_center, radius, iterations, palette, png_name_buf);
+  for (int childID = 0; childID < NUM_CHILDREN; childID++) {
+    if (fork() == 0) {
+      for (int i = childID; i < NUM_IMAGES; i += NUM_CHILDREN) {
+        char png_name_buf[32];
+        sprintf(png_name_buf, "%d.png", i);
 
-    radius /= 1.25; //1.1;
+        render_image(i_center, r_center, radius, iterations, palette, png_name_buf);
+        printf("Child %d: wrote %s\n", childID, png_name_buf);
+
+        for (int j = 0; j < NUM_CHILDREN; j++) {
+          radius /= 1.25;
+        }
+      }
+
+      exit(0);
+    }
+
+    radius /= 1.25;
+  }
+
+  for (int i = 0; i < NUM_CHILDREN; i++) {
+    wait(NULL);
+    printf("wait(NULL) returned\n");
   }
 }
