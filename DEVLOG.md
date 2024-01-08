@@ -8,6 +8,9 @@ I have set up a temporary makefile and header file for the main file that will l
 ### 2024-01-05 to 2024-01-07 - Forking and Running Code on Lab Machines
 Ssh through execvp has now been completely set up. In class, due to difficulties with the ssh agent and ssh non-interactive mode, there were no commits done, rather testing and research to make it work by the end of the class. The stricthostkeychecking has been turned off to allow for immediate addition of the fingerprint to the known_hosts for each lab machine, and a temporary lab executable has been compiled to be ran via the arguments in the ssh. Forking has also been set up to actually connect to the corresponding lab machine for each child, and the running of the executable file has been tested as well. Due to potential issues with computers 15 and 31, the arbitrary number of lab machines has been limited to 14, until 15, 31, and other lab machines are "online" again. For this second part, including testing, 60 minutes has been spent at home.
 
+### 2024-01-08 - Setting up Socket Between Child and Host
+I made each child fork a second time so that the "second child" will run the ssh until it is done and the "regular child" will act as the main computer or server and communicate with the lab machine "client." I created all of the required functions for both the client and the server and added base code for communication after the connection is established. There is an issue with connection to the socket, and testing is in progress. The entire class time was spent and approximately 90 minutes both before and after class.
+
 ## Simon
 
 ### 2024-01-02 - Brief description

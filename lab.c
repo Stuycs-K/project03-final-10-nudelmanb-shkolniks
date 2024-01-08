@@ -11,15 +11,21 @@
 #include <sys/socket.h> 
 #include <netdb.h>
 
-int connect_to_main(char* server_address) {
+void err(int i, char*message){
+  if(i < 0){
+	  printf("Error: %s - %s\n", message, strerror(errno));
+  	// exit(1);
+  }
+}
 
+int connect_to_main(char* server_address) {
   //getaddrinfo
   struct addrinfo * hints, * results;
   hints = calloc(1,sizeof(struct addrinfo));
   hints->ai_family = AF_INET;
   hints->ai_socktype = SOCK_STREAM; 
   hints->ai_flags = AI_PASSIVE; 
-  getaddrinfo(server_address, "1738", hints, &results);
+  getaddrinfo(server_address, "58008", hints, &results);
 
   int serverd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
   //use bind
@@ -35,6 +41,7 @@ int connect_to_main(char* server_address) {
 }
 
 int main(){
+    err(errno, "check");
     printf("this is done on the lab machine\n");
     char* IP = "149.89.161.100";
     int main_socket = connect_to_main(IP);

@@ -3,7 +3,7 @@
 void err(int i, char*message){
   if(i < 0){
 	  printf("Error: %s - %s\n", message, strerror(errno));
-  	exit(1);
+  	// exit(1);
   }
 }
 
@@ -55,7 +55,7 @@ int server_lab_connect() {
   hints->ai_family = AF_INET;
   hints->ai_socktype = SOCK_STREAM; 
   hints->ai_flags = AI_PASSIVE; 
-  getaddrinfo(NULL, "1738", hints, &results);
+  getaddrinfo(NULL, "58008", hints, &results);
   //create the socket
   int clientd;//store the socket descriptor here
 	clientd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
@@ -102,18 +102,23 @@ int main(int argc, char *argv[]){
         int f1 = fork();
         if (f1 == 0){
             // printf("machine %d: \n", current_machine);
-            lab_run_client("161", current_machine, "bnudelman40");
+            printf("This is child of child %d\n", current_machine);
+            // lab_run_client("161", current_machine, "bnudelman40");
         }
         else{
+            // printf("This is child %d\n", current_machine);
+            err(errno, "check");
             int lab_socket = server_lab_connect();
+            printf("got to this point\n");
 
-            char* input_from_client = malloc(BUFFER_SIZE + 1);
-            int bytes = read(lab_socket, input_from_client, BUFFER_SIZE);
-            printf("got here");
-            if(bytes == -1) err(errno, "read error");
 
-            input_from_client[bytes] = 0;
-            printf("Message: %s\n", input_from_client);
+            // char* input_from_client = malloc(BUFFER_SIZE + 1);
+            // int bytes = read(lab_socket, input_from_client, BUFFER_SIZE);
+            // printf("got here");
+            // if(bytes == -1) err(errno, "read error");
+
+            // input_from_client[bytes] = 0;
+            // printf("Message: %s\n", input_from_client);
         }
     }
     return 0;

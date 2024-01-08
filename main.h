@@ -16,7 +16,7 @@
 
 #define BUFFER_SIZE 1024
 
-void err(int i, char*message);
+void err(int i, char* message);
 int lab_run_client(char* lab, int machine_number, char* user);
 int server_lab_connect();
 

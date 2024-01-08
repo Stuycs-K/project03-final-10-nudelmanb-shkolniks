@@ -19,3 +19,6 @@ clean:
 	@rm *.o 2> /dev/null || true
 	@rm *~ 2> /dev/null || true
 	@rm main.out lab.out 2> /dev/null || true #for error-handling, can be commented out
+
+rmnfs:
+	@rm .nfs*
