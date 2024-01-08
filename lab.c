@@ -11,7 +11,7 @@
 #include <sys/socket.h> 
 #include <netdb.h>
 
-int lab_net_connect(char* server_address) {
+int connect_to_main(char* server_address) {
 
   //getaddrinfo
   struct addrinfo * hints, * results;
@@ -21,9 +21,7 @@ int lab_net_connect(char* server_address) {
   hints->ai_flags = AI_PASSIVE; 
   getaddrinfo(server_address, "1738", hints, &results);
 
-  int serverd;//store the socket descriptor here
-  //create the socket
-  serverd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+  int serverd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
   //use bind
   bind(serverd, results->ai_addr, results->ai_addrlen);
   
@@ -38,5 +36,12 @@ int lab_net_connect(char* server_address) {
 
 int main(){
     printf("this is done on the lab machine\n");
+    char* IP = "149.89.161.100";
+    int main_socket = connect_to_main(IP);
+
+    char* input = "howdy";
+    printf("Sending %s to the server\n", input);
+    write(main_socket, input, strlen(input));
+
     return 0;
 }

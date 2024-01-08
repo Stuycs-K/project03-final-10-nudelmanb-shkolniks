@@ -1,9 +1,10 @@
 #include "main.h"
 
-void err(){
-    printf("errno %d\n", errno);
-    printf("%s\n", strerror(errno));
-    // exit(1);
+void err(int i, char*message){
+  if(i < 0){
+	  printf("Error: %s - %s\n", message, strerror(errno));
+  	exit(1);
+  }
 }
 
 /*
@@ -11,7 +12,7 @@ This function is used to ssh into a designated the computers in one (or several)
 and download/run an executable file that makes it run like a server and exchange the appropriate
 information through the socket. This file should be run on marge other simpson-named machine.
 */
-int connect_labs(char* lab, int machine_number, char* user){
+int lab_run_client(char* lab, int machine_number, char* user){
     char* IP = malloc(14);
     strcpy(IP, "149.89.");
     strcat(IP, lab);
@@ -98,9 +99,22 @@ int main(int argc, char *argv[]){
         }
     }
     if(f == 0){
-        printf("machine %d: \n", current_machine);
-        connect_labs("161", current_machine, "bnudelman40");
-        //have to get out of ssh here and connect to the network
+        int f1 = fork();
+        if (f1 == 0){
+            // printf("machine %d: \n", current_machine);
+            lab_run_client("161", current_machine, "bnudelman40");
+        }
+        else{
+            int lab_socket = server_lab_connect();
+
+            char* input_from_client = malloc(BUFFER_SIZE + 1);
+            int bytes = read(lab_socket, input_from_client, BUFFER_SIZE);
+            printf("got here");
+            if(bytes == -1) err(errno, "read error");
+
+            input_from_client[bytes] = 0;
+            printf("Message: %s\n", input_from_client);
+        }
     }
     return 0;
 }
