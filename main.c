@@ -1,7 +1,7 @@
 #include "main.h"
 
 void err(int i, char*message){
-    printf("err called for '%s'\n", message);
+    printf("err called for '%s', i=%d, strerror %s\n", message, i, strerror(errno));
    if(i < 0){
 	  printf("Error: %s - %s\n", message, strerror(errno));
   	//   exit(1);
@@ -32,15 +32,19 @@ int lab_run_client(char* lab, int machine_number, char* user){
     strcpy(sshprompt, user);
     strcat(sshprompt, "@");
     strcat(sshprompt, IP);
-
+    err(0, "check7");
     args[1] = sshprompt;
     args[2] = "-o";
     args[3] = "StrictHostKeyChecking=no";
-    args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks;./lab";
+    // args[4] = "ls; exit";
+    args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks;ls;./lab";
+    //figure out a way to close connection after the lab is done running
     args[5] = NULL;
 
     printf("%s", sshprompt);
+    err(0, "check8");
     execvp(args[0], args);
+    err(-1, "check9");
     
     return 0; //0 for functional, yet to add conditions
 }
@@ -65,7 +69,8 @@ int server_setup() {
   err(sockOpt, "sockopt error");
   
   //bind the socket to address and port
-  bind(clientd, results->ai_addr, results->ai_addrlen);
+  int error = bind(clientd, results->ai_addr, results->ai_addrlen);
+  err(error, "check1.5");
 
   //set socket to listen state
   int listen_result = listen(clientd, 10);
@@ -86,6 +91,7 @@ int server_lab_connect(int listen_socket) {
   socklen_t sock_size;
   struct sockaddr_storage client_address;
   sock_size = sizeof(client_address);
+  printf("got to this part of server_lab_connect");
   //accept the client connection
   client_socket = accept(listen_socket,(struct sockaddr *) &client_address, &sock_size);
 
@@ -121,7 +127,7 @@ int main(int argc, char *argv[]){
             err(f1, "check5");
             if (f1 != 0 ){
                 // printf("This is child %d\n", current_machine);
-                // err(errno, "check");
+                err(f1, "check5.5");
 
                 int lab_socket = server_lab_connect(listen_socket);
                 printf("got to this point\n");

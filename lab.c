@@ -19,6 +19,7 @@ void err(int i, char*message){
 }
 
 int connect_to_main(char* server_address) {
+  err(0, "check2");
   //getaddrinfo
   struct addrinfo * hints, * results;
   hints = calloc(1,sizeof(struct addrinfo));
@@ -29,31 +30,35 @@ int connect_to_main(char* server_address) {
 
   int serverd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
   
-   err(errno, "child check3");
+  err(errno, "child check3");
 
+  int yes = 1;
+  int sockOpt =  setsockopt(serverd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+  err(sockOpt, "sockopt error");
 
   //use bind
-  bind(serverd, results->ai_addr, results->ai_addrlen);
-  
-  err(errno, "child check4");
-  //connect to the server
-  connect(serverd, results->ai_addr, results->ai_addrlen);
+  int error = bind(serverd, results->ai_addr, results->ai_addrlen);
 
-  free(hints);
-  freeaddrinfo(results);
+  err(error, "child check4");
+
+  // //connect to the server
+  // connect(serverd, results->ai_addr, results->ai_addrlen);
+
+  // free(hints);
+  // freeaddrinfo(results);
 
   return serverd;
 }
 
 int main(){
-    // err(errno, "check");
+    err(0, "check2");
     printf("this is done on the lab machine\n");
     char* IP = "149.89.161.100";
+    err(0, "check");
     int main_socket = connect_to_main(IP);
 
-    char* input = "howdy";
-    printf("Sending %s to the server\n", input);
-    write(main_socket, input, strlen(input));
-
+    // char* input = "howdy";
+    // printf("Sending %s to the server\n", input);
+    // write(main_socket, input, strlen(input));
     return 0;
 }
