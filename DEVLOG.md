@@ -11,6 +11,9 @@ Ssh through execvp has now been completely set up. In class, due to difficulties
 ### 2024-01-08 - Setting up Socket Between Child and Host
 I made each child fork a second time so that the "second child" will run the ssh until it is done and the "regular child" will act as the main computer or server and communicate with the lab machine "client." I created all of the required functions for both the client and the server and added base code for communication after the connection is established. There is an issue with connection to the socket, and testing is in progress. The entire class time was spent and approximately 90 minutes both before and after class.
 
+### 2024-01-09 - Adding Semaphores and Testing for 'Address already in use' error
+Running the main executable produced no output originally despite the test print statements. Therefore, I added semaphore compatibility for each child to wait before the previous child finishes connecting to the network, and then they can all simulatenously send data across their corresponding network sockets. There still remains an 'address in use' error despite the socketopt function being called, and the output of the executable states that the err function is called in a certain instance where it is actually not. This issue is still being investigated. The total time spent was class time and an additional 90 minutes, and the error is yet to be resolved.
+
 ## Simon
 
 ### 2024-01-02 - Brief description

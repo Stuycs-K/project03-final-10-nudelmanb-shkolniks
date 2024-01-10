@@ -12,10 +12,10 @@
 #include <netdb.h>
 
 void err(int i, char*message){
-  if(i < 0){
+  // if(i < 0){
 	  printf("Error: %s - %s\n", message, strerror(errno));
   	// exit(1);
-  }
+  // }
 }
 
 int connect_to_main(char* server_address) {
@@ -28,9 +28,14 @@ int connect_to_main(char* server_address) {
   getaddrinfo(server_address, "58008", hints, &results);
 
   int serverd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+  
+   err(errno, "child check3");
+
+
   //use bind
   bind(serverd, results->ai_addr, results->ai_addrlen);
   
+  err(errno, "child check4");
   //connect to the server
   connect(serverd, results->ai_addr, results->ai_addrlen);
 
@@ -41,7 +46,7 @@ int connect_to_main(char* server_address) {
 }
 
 int main(){
-    err(errno, "check");
+    // err(errno, "check");
     printf("this is done on the lab machine\n");
     char* IP = "149.89.161.100";
     int main_socket = connect_to_main(IP);

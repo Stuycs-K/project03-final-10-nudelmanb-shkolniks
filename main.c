@@ -1,10 +1,10 @@
 #include "main.h"
 
 void err(int i, char*message){
-//   if(i < 0){
+  if(i < 0){
 	  printf("Error: %s - %s\n", message, strerror(errno));
   	//   exit(1);
-//   }
+  }
 }
 
 /*
@@ -69,6 +69,7 @@ int server_setup() {
   err(errno, "check1");
   //set socket to listen state
   listen(clientd, 10);
+  err(errno, "check2");
 
   //free the structs used by getaddrinfo
   free(hints);
@@ -96,6 +97,7 @@ int main(int argc, char *argv[]){
     int f = 1;
     int current_machine = 0;
     int listen_socket = server_setup();
+    err(errno, "check3");
 
     //set up semaphore
     int semd = semget(SEMKEY, 1, IPC_CREAT | 0644);
@@ -128,7 +130,7 @@ int main(int argc, char *argv[]){
         
         if (f1 != 0 ){
             // printf("This is child %d\n", current_machine);
-            err(errno, "check");
+            // err(errno, "check");
             int lab_socket = server_lab_connect(listen_socket);
             printf("got to this point\n");
 
