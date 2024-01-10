@@ -68,22 +68,29 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
 #define RGBA(r, g, b, a) ((r) | ((g) << 8) | ((b) << 16) | ((a) << 24))
 #define RGB(r, g, b) RGBA(r, g, b, 0xff)
 
-void render_image(double i_center, double r_center, double radius, int iterations, int* palette, char* out_name) {
-  int size_r = 512;
-  int size_i = 512;
+struct image_info {
+  double r_min;
+  double i_min;
 
-  libattopng_t* png = libattopng_new(size_r, size_i, PNG_PALETTE);
-  libattopng_set_palette(png, palette, 256);
+  double r_max;
+  double i_max;
 
-  double i_min = i_center - radius;
-  double i_max = i_center + radius;
-  double r_min = r_center - radius;
-  double r_max = r_center + radius; 
-  
-  for (int ic = 0; ic < size_i; ic++) {
-    for (int rc = 0; rc < size_r; rc++) {
-      double i = i_max + ((i_min - i_max) * ic) / size_i;
-      double r = r_min + ((r_max - r_min) * rc) / size_r;
+  int iterations;
+  int* palette;
+  char* out_name;
+
+  int size_r;
+  int size_i;
+};
+
+void render_image(struct image_info* info) {
+  libattopng_t* png = libattopng_new(info->size_r, info->size_i, PNG_PALETTE);
+  libattopng_set_palette(png, info->palette, 256);
+
+  for (int ic = 0; ic < info->size_i; ic++) {
+    for (int rc = 0; rc < info->size_r; rc++) {
+      double i = info->i_max + ((info->i_min - info->i_max) * ic) / info->size_i;
+      double r = info->r_min + ((info->r_max - info->r_min) * rc) / info->size_r;
 
       struct complex z;
       z.r = 0;
@@ -93,7 +100,7 @@ void render_image(double i_center, double r_center, double radius, int iteration
       c.r = r;
       c.i = i;
 
-      int count = iterate(iterations, &z, &c);
+      int count = iterate(info->iterations, &z, &c);
 
       if (count == -1) {
         libattopng_set_pixel(png, rc, ic, 0);
@@ -103,15 +110,13 @@ void render_image(double i_center, double r_center, double radius, int iteration
     }
   }
 
-  libattopng_save(png, out_name);
+  libattopng_save(png, info->out_name);
   libattopng_destroy(png);
 }
 
 int main() {
   double i_center = 0.022143087552935;
-  //double i_center = -0.004012241; 
   double r_center = -1.627637309835029;
-  //double r_center = -1.399885757;
 
   int iterations = 2000;
   double radius = 2;
@@ -149,9 +154,20 @@ int main() {
     if (fork() == 0) {
       for (int i = childID; i < NUM_IMAGES; i += NUM_CHILDREN) {
         char png_name_buf[32];
-        sprintf(png_name_buf, "%d.png", i);
+        sprintf(png_name_buf, "%05d.png", i);
 
-        render_image(i_center, r_center, radius, iterations, palette, png_name_buf);
+        struct image_info info;
+        info.r_min = r_center - radius;
+        info.i_min = i_center - radius;
+        info.r_max = r_center + radius;
+        info.i_max = i_center + radius;
+        info.iterations = iterations;
+        info.palette = palette;
+        info.out_name = png_name_buf;
+        info.size_r = 512;
+        info.size_i = 512;
+
+        render_image(&info);
         printf("Child %d: wrote %s\n", childID, png_name_buf);
 
         for (int j = 0; j < NUM_CHILDREN; j++) {
