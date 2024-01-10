@@ -5,6 +5,7 @@
 //#include <gmp.h>
 #include "compute.h"
 #include "libattopng.h"
+#include "networking.h"
 
 // iterate z^2 + c iterations times
 int iterate(int iterations, struct complex* z, struct complex* c) {
@@ -65,24 +66,6 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
   return -1;
 }
 
-#define RGBA(r, g, b, a) ((r) | ((g) << 8) | ((b) << 16) | ((a) << 24))
-#define RGB(r, g, b) RGBA(r, g, b, 0xff)
-
-struct image_info {
-  double r_min;
-  double i_min;
-
-  double r_max;
-  double i_max;
-
-  int iterations;
-  int* palette;
-  char* out_name;
-
-  int size_r;
-  int size_i;
-};
-
 void render_image(struct image_info* info) {
   libattopng_t* png = libattopng_new(info->size_r, info->size_i, PNG_PALETTE);
   libattopng_set_palette(png, info->palette, 256);
@@ -115,7 +98,8 @@ void render_image(struct image_info* info) {
 }
 
 int main() {
-  double i_center = 0.022143087552935;
+  struct image_info info;
+  /*double i_center = 0.022143087552935;
   double r_center = -1.627637309835029;
 
   int iterations = 2000;
@@ -157,13 +141,16 @@ int main() {
         sprintf(png_name_buf, "%05d.png", i);
 
         struct image_info info;
+
         info.r_min = r_center - radius;
         info.i_min = i_center - radius;
         info.r_max = r_center + radius;
         info.i_max = i_center + radius;
+
         info.iterations = iterations;
         info.palette = palette;
         info.out_name = png_name_buf;
+
         info.size_r = 512;
         info.size_i = 512;
 
@@ -184,5 +171,5 @@ int main() {
   for (int i = 0; i < NUM_CHILDREN; i++) {
     wait(NULL);
     printf("wait(NULL) returned\n");
-  }
+  }*/
 }
