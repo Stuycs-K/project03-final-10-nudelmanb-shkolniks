@@ -4,7 +4,7 @@ compile main.out lab.out: client.o server.o
 	@gcc -o lab.out lab.o networking.o -Wall
 
 main: main.out
-	@./client.out $(ARGS)
+	@./main.out $(ARGS)
 
 lab: lab.out
 	@./lab.out $(ARGS)

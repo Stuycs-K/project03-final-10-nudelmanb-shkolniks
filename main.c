@@ -1,10 +1,11 @@
 #include "main.h"
 
 void err(int i, char*message){
-  if(i < 0){
+    printf("err called for '%s'\n", message);
+   if(i < 0){
 	  printf("Error: %s - %s\n", message, strerror(errno));
   	//   exit(1);
-  }
+   }
 }
 
 /*
@@ -66,10 +67,9 @@ int server_setup() {
   //bind the socket to address and port
   bind(clientd, results->ai_addr, results->ai_addrlen);
 
-  err(errno, "check1");
   //set socket to listen state
-  listen(clientd, 10);
-  err(errno, "check2");
+  int listen_result = listen(clientd, 10);
+  err(listen_result, "check2");
 
   //free the structs used by getaddrinfo
   free(hints);
@@ -94,61 +94,60 @@ int server_lab_connect(int listen_socket) {
 
 int main(int argc, char *argv[]){
     int machines = 1;
-    int f = 1;
-    int current_machine = 0;
+    // int current_machine = 1;
     int listen_socket = server_setup();
-    err(errno, "check3");
+    err(listen_socket, "check3");
 
     //set up semaphore
-    int semd = semget(SEMKEY, 1, IPC_CREAT | 0644);
-    if (semd == - 1) err(errno, "semaphore setup error");
+    // int semd = semget(SEMKEY, 1, IPC_CREAT | 0644);
+    // if (semd == - 1) err(errno, "semaphore setup error");
 
-    union semun us;
-    us.val = 1;
-    int r = semctl(semd, 0, SETVAL, us);
+    // union semun us;
+    // us.val = 1;
+    // int r = semctl(semd, 0, SETVAL, us);
 
     for(int i=1; i <= machines; i++){
-        if(f > 0){
-            current_machine = i;
-            f = fork();
-        }
-        else{
-            break;
+        int f = fork();
+
+        err(f, "check4");
+        if(f == 0){
+            // struct sembuf sb;
+            // sb.sem_num = 0;
+            // sb.sem_flg = SEM_UNDO;
+            // sb.sem_op = -1; //setting operation to down
+            // semop(semd, &sb, 1);
+
+            int f1 = fork();
+            err(f1, "check5");
+            if (f1 != 0 ){
+                // printf("This is child %d\n", current_machine);
+                // err(errno, "check");
+
+                int lab_socket = server_lab_connect(listen_socket);
+                printf("got to this point\n");
+
+                // sb.sem_op = 1; //setting operation to up
+                // semop(semd, &sb, 1);
+                // char* input_from_client = malloc(BUFFER_SIZE + 1);
+                // int bytes = read(lab_socket, input_from_client, BUFFER_SIZE);
+                // printf("got here");
+                // if(bytes == -1) err(errno, "read error");
+
+                // input_from_client[bytes] = 0;
+                // printf("Message: %s\n", input_from_client);
+
+                exit(0);
+            }  else {
+                printf("this is in the double forked child\n");
+                err(f1, "check6");
+                // printf("machine %d: \n", current_machine);
+                // printf("This is child of child %d\n", current_machine);
+                lab_run_client("161", i, "bnudelman40");
+
+                exit(0);
+            }
         }
     }
-    if(f == 0){
-        semd = semget(SEMKEY, 1, 0644);
-        if (semd == -1) err(errno, "semaphore 'get' error");
 
-        struct sembuf sb;
-        sb.sem_num = 0;
-        sb.sem_flg = SEM_UNDO;
-        sb.sem_op = -1; //setting operation to down
-        semop(semd, &sb, 1);
-
-        int f1 = fork();
-        
-        if (f1 != 0 ){
-            // printf("This is child %d\n", current_machine);
-            // err(errno, "check");
-            int lab_socket = server_lab_connect(listen_socket);
-            printf("got to this point\n");
-
-            sb.sem_op = 1; //setting operation to up
-            semop(semd, &sb, 1);
-            // char* input_from_client = malloc(BUFFER_SIZE + 1);
-            // int bytes = read(lab_socket, input_from_client, BUFFER_SIZE);
-            // printf("got here");
-            // if(bytes == -1) err(errno, "read error");
-
-            // input_from_client[bytes] = 0;
-            // printf("Message: %s\n", input_from_client);
-        }
-        else if (f1 == 0){
-            // printf("machine %d: \n", current_machine);
-            // printf("This is child of child %d\n", current_machine);
-            lab_run_client("161", current_machine, "bnudelman40");
-        }
-    }
     return 0;
 }
