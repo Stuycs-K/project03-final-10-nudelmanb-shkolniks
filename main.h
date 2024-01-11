@@ -21,8 +21,8 @@
 
 void err(int i, char* message);
 int lab_run_client(char* lab, int machine_number, char* user);
-int server_lab_connect(int listen_socket);
-int server_lab_setup();
+int connect_machine_net(char* server_address);
+char* find_ip(char* lab, int machine_number);
 
 union semun { 
    int              val;    /* Value for SETVAL */

@@ -12,7 +12,7 @@ lab: lab.out
 main.o: main.c main.h
 	@gcc -c main.c -Wall
 
-lab.o: lab.c
+lab.o: lab.c lab.h
 	@gcc -c lab.c -Wall
 
 clean:

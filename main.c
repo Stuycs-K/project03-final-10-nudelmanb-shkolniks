@@ -14,16 +14,8 @@ and download/run an executable file that makes it run like a server and exchange
 information through the socket. This file should be run on marge other simpson-named machine.
 */
 int lab_run_client(char* lab, int machine_number, char* user){
-    char* IP = malloc(14);
-    strcpy(IP, "149.89.");
-    strcat(IP, lab);
-    strcat(IP, ".1");
-    if (machine_number < 10){
-        strcat(IP, "0");
-    }
-    char* machine_string = malloc(2);
-    sprintf(machine_string, "%d", machine_number);
-    strcat(IP, machine_string);
+    
+    char* IP = find_ip(lab, machine_number);
 
     char* args[16];
     args[0] = "ssh";
@@ -49,60 +41,57 @@ int lab_run_client(char* lab, int machine_number, char* user){
     return 0; //0 for functional, yet to add conditions
 }
 
-/*Set up the server by creating and binding the socket, and returning the listening socket.
-*/
-int server_setup() {
-  //setup structs for getaddrinfo
+char* find_ip(char* lab, int machine_number){
+    char* IP = malloc(14);
+    strcpy(IP, "149.89.");
+    strcat(IP, lab);
+    strcat(IP, ".1");
+    if (machine_number < 10){
+        strcat(IP, "0");
+    }
+    char* machine_string = malloc(2);
+    sprintf(machine_string, "%d", machine_number);
+    strcat(IP, machine_string);
+    return IP;
+}
+
+int connect_machine_net(char* server_address) {
+  err(0, "check2");
+  //getaddrinfo
   struct addrinfo * hints, * results;
   hints = calloc(1,sizeof(struct addrinfo));
   hints->ai_family = AF_INET;
   hints->ai_socktype = SOCK_STREAM; 
   hints->ai_flags = AI_PASSIVE; 
-  getaddrinfo(NULL, "58008", hints, &results);
-  //create the socket
-  int clientd;//store the socket descriptor here
-	clientd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+  getaddrinfo(server_address, "58008", hints, &results);
 
-  //this code should get around the address in use error
+  int serverd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+  
+  err(errno, "child check3");
+
   int yes = 1;
-  int sockOpt =  setsockopt(clientd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+  int sockOpt =  setsockopt(serverd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
   err(sockOpt, "sockopt error");
-  
-  //bind the socket to address and port
-  int error = bind(clientd, results->ai_addr, results->ai_addrlen);
-  err(error, "check1.5");
 
-  //set socket to listen state
-  int listen_result = listen(clientd, 10);
-  err(listen_result, "check2");
+  //use bind
+  int error = bind(serverd, results->ai_addr, results->ai_addrlen);
 
-  //free the structs used by getaddrinfo
-  free(hints);
-  freeaddrinfo(results);
-  
-  return clientd;
-}
+  err(error, "child check4");
 
-/*Connect to the client and return the client socket identifier
-*/
-int server_lab_connect(int listen_socket) {
-  int client_socket;
+  // //connect to the server
+  // connect(serverd, results->ai_addr, results->ai_addrlen);
 
-  socklen_t sock_size;
-  struct sockaddr_storage client_address;
-  sock_size = sizeof(client_address);
-  printf("got to this part of server_lab_connect");
-  //accept the client connection
-  client_socket = accept(listen_socket,(struct sockaddr *) &client_address, &sock_size);
+  // free(hints);
+  // freeaddrinfo(results);
 
-  return client_socket;
+  return serverd;
 }
 
 int main(int argc, char *argv[]){
     int machines = 1;
     // int current_machine = 1;
-    int listen_socket = server_setup();
-    err(listen_socket, "check3");
+    // int listen_socket = server_setup();
+    // err(listen_socket, "check3");
 
     //set up semaphore
     // int semd = semget(SEMKEY, 1, IPC_CREAT | 0644);
@@ -125,11 +114,20 @@ int main(int argc, char *argv[]){
 
             int f1 = fork();
             err(f1, "check5");
-            if (f1 != 0 ){
+            if (f1 == 0){
+                printf("this is in the double forked child\n");
+                err(f1, "check6");
+                // printf("machine %d: \n", current_machine);
+                // printf("This is child of child %d\n", current_machine);
+                lab_run_client("161", i, "bnudelman40");
+
+                exit(0);
+            }  else {
                 // printf("This is child %d\n", current_machine);
                 err(f1, "check5.5");
 
-                int lab_socket = server_lab_connect(listen_socket);
+                char* lab_IP = find_ip("161", i);
+                int lab_socket = connect_machine_net(lab_IP);
                 printf("got to this point\n");
 
                 // sb.sem_op = 1; //setting operation to up
@@ -141,14 +139,6 @@ int main(int argc, char *argv[]){
 
                 // input_from_client[bytes] = 0;
                 // printf("Message: %s\n", input_from_client);
-
-                exit(0);
-            }  else {
-                printf("this is in the double forked child\n");
-                err(f1, "check6");
-                // printf("machine %d: \n", current_machine);
-                // printf("This is child of child %d\n", current_machine);
-                lab_run_client("161", i, "bnudelman40");
 
                 exit(0);
             }

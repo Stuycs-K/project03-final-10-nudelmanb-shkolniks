@@ -14,8 +14,11 @@ I made each child fork a second time so that the "second child" will run the ssh
 ### 2024-01-09 - Adding Semaphores and Testing for 'Address already in use' error
 Running the main executable produced no output originally despite the test print statements. Therefore, I added semaphore compatibility for each child to wait before the previous child finishes connecting to the network, and then they can all simulatenously send data across their corresponding network sockets. There still remains an 'address in use' error despite the socketopt function being called, and the output of the executable states that the err function is called in a certain instance where it is actually not. This issue is still being investigated. The total time spent was class time and an additional 90 minutes, and the error is yet to be resolved.
 
-### 2024-01-09 - Reformatting and More Debugging
+### 2024-01-10 - Reformatting and More Debugging
 Along with Simon, the code was reformatted for improved readability and unnecessary components were eliminated. The lab executable was likely not being called, and this issue was fixed, and now there is more extensive debugging being done to attempt to revise a "cannot assign requested address" error. This work has taken all of class time and at least 90 minutes after class. Once this part is complete there is just the coding of the data to be sent across and the major parts of the project are complete.
+
+### 2024-01-11 - Changing network structure, more debugging
+The code was all rearranged and slightly modified so that the lab machines will all set up their own servers and each forked child will connect to their corresponding server to recieve information from the Mandelbrot computation. The "address cannot be assigned" error on bind still has not been fixed, though it has been narrowed down. I have spent all of class time and at least 30 minutes at home today.
 
 ## Simon
 
