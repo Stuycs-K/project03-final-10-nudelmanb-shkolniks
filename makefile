@@ -1,8 +1,15 @@
-run: compile
+compute: compile
 	@./compute
 
-compile: compute.o libattopng.o networking.o
-	@gcc -o compute compute.o libattopng.o
+main: compile
+	@./main
+
+compile: compute.o main.o libattopng.o networking.o
+	@gcc -o compute compute.o libattopng.o networking.o
+	@gcc -o main main.o networking.o
+
+main.o: main.c networking.h compute.h
+	@gcc -c main.c
 
 compute.o: compute.c compute.h networking.h
 	@gcc -c compute.c
