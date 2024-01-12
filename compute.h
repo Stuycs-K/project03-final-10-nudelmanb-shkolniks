@@ -24,8 +24,8 @@ struct image_info {
   mpf_t i_max;
 
   int iterations;
-  int* palette;
-  char* out_name;
+  int palette[256];
+  char out_name[32];
 
   int size_r;
   int size_i;

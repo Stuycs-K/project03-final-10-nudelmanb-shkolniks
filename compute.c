@@ -98,7 +98,31 @@ void render_image(struct image_info* info) {
 }
 
 int main() {
-  struct image_info info;
+  printf("Setting up server\n");
+  int listen_socket = server_setup(); 
+
+  printf("Waiting for connection\n");
+  int client_socket = server_tcp_handshake(listen_socket);
+  
+  printf("Connection made\n");
+
+  while (1) {
+    struct image_info info;
+    ssize_t bytes = read(client_socket, &info, sizeof(info));
+
+    if (bytes == 0) {
+      printf("0 bytes read, connection closed\n");
+      return;
+    }
+
+    printf("Recieved compute command:\n");
+    printf("\tcoordinates: %f + %fi to %f + %fi\n", info.r_min, info.i_min, info.r_max, info.i_max);
+    printf("\titerations: %d, out name: %s\n", info.iterations, info.out_name);
+    printf("\tout width: %d, out height: %d\n", info.size_r, info.size_i);
+
+    render_image(&info);
+  }
+
   /*double i_center = 0.022143087552935;
   double r_center = -1.627637309835029;
 
@@ -137,10 +161,9 @@ int main() {
   for (int childID = 0; childID < NUM_CHILDREN; childID++) {
     if (fork() == 0) {
       for (int i = childID; i < NUM_IMAGES; i += NUM_CHILDREN) {
-        char png_name_buf[32];
-        sprintf(png_name_buf, "%05d.png", i);
-
         struct image_info info;
+
+        sprintf(info.out_name, "%05d.png", i);
 
         info.r_min = r_center - radius;
         info.i_min = i_center - radius;

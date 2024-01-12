@@ -17,7 +17,7 @@ int client_tcp_handshake(char* server_address) {
   );
 
   //create the socket
-  int clientd = socket(AF_INET, SOCK_STREAM, 0);
+  int clientd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
   err(clientd, "socket error");
 
   //connect to the server
@@ -27,7 +27,7 @@ int client_tcp_handshake(char* server_address) {
   free(hints);
   freeaddrinfo(results);
 
-  return serverd;
+  return clientd;
 }
 
 /*Accept a connection from a client
@@ -62,7 +62,7 @@ int server_setup() {
   );
 
   //create the socket
-  int clientd = socket(AF_INET, SOCK_STREAM, 0); //store the socket descriptor here
+  int clientd = socket(results->ai_family, results->ai_socktype, results->ai_protocol); //store the socket descriptor here
   err(clientd, "socket error");
 
   //this code should get around the address in use error
@@ -80,7 +80,7 @@ int server_setup() {
 
   //set socket to listen state
   err(
-    listen(clientd, 32),
+    listen(clientd, 10),
     "listen error"
   );
 
@@ -95,5 +95,7 @@ void err(int i, char* message){
   if(i < 0){
 	  printf("Error: %s - %s\n", message, strerror(errno));
   	exit(1);
+  } else {
+    //printf("No error: %s - i=%d\n", message, i);
   }
 }
