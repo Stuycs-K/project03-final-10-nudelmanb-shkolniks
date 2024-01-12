@@ -44,14 +44,12 @@ int server_setup() {
 /*Connect to the client and return the client socket identifier
 */
 int server_lab_connect(int listen_socket) {
-  int client_socket;
-
   socklen_t sock_size;
   struct sockaddr_storage client_address;
   sock_size = sizeof(client_address);
   printf("got to this part of server_lab_connect");
   //accept the client connection
-  client_socket = accept(listen_socket,(struct sockaddr *) &client_address, &sock_size);
+  int client_socket = accept(listen_socket,(struct sockaddr *) &client_address, &sock_size);
 
   return client_socket;
 }

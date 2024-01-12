@@ -24,19 +24,15 @@ int lab_run_client(char* lab, int machine_number, char* user){
     strcpy(sshprompt, user);
     strcat(sshprompt, "@");
     strcat(sshprompt, IP);
-    err(0, "check7");
     args[1] = sshprompt;
     args[2] = "-o";
     args[3] = "StrictHostKeyChecking=no";
     // args[4] = "ls; exit";
-    args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks;ls;./lab";
+    args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks;./lab";
     //figure out a way to close connection after the lab is done running
     args[5] = NULL;
 
-    printf("%s", sshprompt);
-    err(0, "check8");
     execvp(args[0], args);
-    err(-1, "check9");
     
     return 0; //0 for functional, yet to add conditions
 }
@@ -65,26 +61,16 @@ int connect_machine_net(char* server_address) {
   hints->ai_flags = AI_PASSIVE; 
   getaddrinfo(server_address, "58008", hints, &results);
 
-  int serverd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
-  
-  err(errno, "child check3");
+  int clientd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+  err(clientd, "child check3");
 
-  int yes = 1;
-  int sockOpt =  setsockopt(serverd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-  err(sockOpt, "sockopt error");
+  int serverd = connect(clientd, results->ai_addr, results->ai_addrlen);
+  err(serverd, "connect error");
 
-  //use bind
-  int error = bind(serverd, results->ai_addr, results->ai_addrlen);
+  free(hints);
+  freeaddrinfo(results);
 
-  err(error, "child check4");
-
-  // //connect to the server
-  // connect(serverd, results->ai_addr, results->ai_addrlen);
-
-  // free(hints);
-  // freeaddrinfo(results);
-
-  return serverd;
+  return clientd;
 }
 
 int main(int argc, char *argv[]){
