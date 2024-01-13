@@ -3,31 +3,43 @@
 #include "networking.h"
 #include "compute.h"
 
-/*
-struct image_info {
-  mpf_t r_min;
-  mpf_t i_min;
+// gets the ip address for a computer in the lab
+void find_ip(char* out, int machine_number) {
+  sprintf(out, "149.89.161.1%02d", machine_number);
+}
 
-  mpf_t r_max;
-  mpf_t i_max;
+// returns a file descriptor of a socket to a remote compute server
+int lab_run_client(int machine_number, char* user){
+  char IP[32];
+  find_ip(IP, machine_number);
 
-  int iterations;
-  int palette[256];
-  char out_name[32];
+  char* args[16];
+  args[0] = "ssh";
 
-  int size_r;
-  int size_i;
-};
-*/
+  char sshprompt[124];
+  sprintf(sshprompt, "%s@%s", user, IP);
+
+  args[1] = sshprompt;
+  args[2] = "-o";
+  args[3] = "StrictHostKeyChecking=no";
+  args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks; make compute";
+  args[5] = NULL;
+
+  if (fork() == 0) {
+    printf("Running ssh command on %s\n", IP);
+    execvp(args[0], args);
+  } else {
+    sleep(10);
+
+    int server_socket = client_tcp_handshake(IP);
+    printf("Connection to compute server %s made\n", IP);
+
+    return server_socket;
+  }
+}
 
 int main() {
-  char* IP = "127.0.0.1";
-  /*if (argc>1) {
-    IP = argv[1];
-  }*/
-
-  int server_socket = client_tcp_handshake(IP);
-  printf("Connection to compute server made.\n");
+  int server_socket = lab_run_client(10, "sshkolnik40");
 
   struct image_info info;
 
