@@ -1,8 +1,8 @@
 compute: compile
-	@./compute
+	@./compute $(ARGS)
 
 main: compile
-	@./main
+	@./main $(ARGS)
 
 compile: compute.o main.o libattopng.o networking.o
 	@gcc -o compute compute.o libattopng.o networking.o

@@ -20,19 +20,6 @@ int client_tcp_handshake(char* server_address) {
   int clientd = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
   err(clientd, "socket error");
 
-  //set out timeout for connection to 10 secs
-  struct timeval timeout;
-  timeout.tv_sec = 10;
-  timeout.tv_usec = 0;
-  err(
-    setsockopt(clientd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)),
-    "sockopt error"
-  );
-  err(
-    setsockopt(clientd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)),
-    "sockopt error"
-  );
-
   //connect to the server
   int serverd = connect(clientd, results->ai_addr, results->ai_addrlen);
   err(serverd, "connect error");
@@ -93,7 +80,7 @@ int server_setup() {
 
   //set socket to listen state
   err(
-    listen(clientd, 10),
+    listen(clientd, 32),
     "listen error"
   );
 

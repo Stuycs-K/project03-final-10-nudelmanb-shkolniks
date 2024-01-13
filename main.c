@@ -8,7 +8,7 @@ void find_ip(char* out, int machine_number) {
   sprintf(out, "149.89.161.1%02d", machine_number);
 }
 
-// returns a file descriptor of a socket to a remote compute server
+// tries running client program on remote computer, if successful server will recieve another connection
 int lab_run_client(int machine_number, char* user){
   char IP[32];
   find_ip(IP, machine_number);
@@ -22,24 +22,21 @@ int lab_run_client(int machine_number, char* user){
   args[1] = sshprompt;
   args[2] = "-o";
   args[3] = "StrictHostKeyChecking=no";
-  args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks; make compute";
+  args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks; make compute ARGS=\"149.89.150.100\"";
   args[5] = NULL;
 
   if (fork() == 0) {
     printf("Running ssh command on %s\n", IP);
     execvp(args[0], args);
-  } else {
-    sleep(10);
-
-    int server_socket = client_tcp_handshake(IP);
-    printf("Connection to compute server %s made\n", IP);
-
-    return server_socket;
   }
 }
 
 int main() {
-  int server_socket = lab_run_client(10, "sshkolnik40");
+  int listen_socket = server_setup(); 
+
+  lab_run_client(10, "sshkolnik40");
+
+  int client_socket = server_tcp_handshake(listen_socket);
 
   struct image_info info;
 
@@ -79,5 +76,5 @@ int main() {
     info.palette[i + 1] = RGB(r, g, b);
   }
 
-  write(server_socket, &info, sizeof(info));
+  write(client_socket, &info, sizeof(info));
 }
