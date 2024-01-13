@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 
     if (bytes == 0) {
       printf("0 bytes read, connection closed\n");
-      return;
+      return 0;
     }
 
     printf("Recieved compute command:\n");

@@ -1,37 +1,69 @@
+#define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include "networking.h"
 #include "compute.h"
 
 // gets the ip address for a computer in the lab
-void find_ip(char* out, int machine_number) {
+void find_lab_ip(char* out, int machine_number) {
   sprintf(out, "149.89.161.1%02d", machine_number);
+}
+
+// returns local ip address
+void get_local_ip(char* out) {
+  struct ifaddrs *ifaddr;
+  getifaddrs(&ifaddr);
+  
+  for (struct ifaddrs *ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    struct sockaddr* addr = ifa->ifa_addr;
+    unsigned int flags = ifa->ifa_flags;
+
+    // is addr ipv4 and not loopback
+    if (addr != NULL && addr->sa_family == AF_INET && !(flags & IFF_LOOPBACK)) {
+      getnameinfo(addr, sizeof(struct sockaddr_in), out, 32, NULL, 0, NI_NUMERICHOST);
+      return;
+    }
+  }
+
+  freeifaddrs(ifaddr);
 }
 
 // tries running client program on remote computer, if successful server will recieve another connection
 int lab_run_client(int machine_number, char* user){
-  char IP[32];
-  find_ip(IP, machine_number);
+  char LOCAL_IP[32];
+  get_local_ip(LOCAL_IP);
+
+  char LAB_IP[32];
+  find_lab_ip(LAB_IP, machine_number);
 
   char* args[16];
   args[0] = "ssh";
 
-  char sshprompt[124];
-  sprintf(sshprompt, "%s@%s", user, IP);
+  char sshprompt[256];
+  sprintf(sshprompt, "%s@%s", user, LAB_IP);
+
+  char command[256];
+  sprintf(command, "cd Desktop/project03-final-10-nudelmanb-shkolniks; make compute ARGS=\"%s\"", LOCAL_IP);
 
   args[1] = sshprompt;
   args[2] = "-o";
   args[3] = "StrictHostKeyChecking=no";
-  args[4] = "cd Desktop/project03-final-10-nudelmanb-shkolniks; make compute ARGS=\"149.89.150.100\"";
+  args[4] = command;
   args[5] = NULL;
 
   if (fork() == 0) {
-    printf("Running ssh command on %s\n", IP);
+    printf("Running ssh command on %s\n", LOCAL_IP);
     execvp(args[0], args);
   }
 }
 
 int main() {
+  printf("Starting server\n");
+  
   int listen_socket = server_setup(); 
 
   lab_run_client(10, "sshkolnik40");
