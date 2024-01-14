@@ -85,7 +85,6 @@ void send_render_command(int fd, struct image_info* info) {
   info->i_max = i_center + radius;
 
   sprintf(info->out_name, "%05d.png", zoom_level);
-  printf("out name: %s\n", info->out_name);
 
   write(fd, info, sizeof(*info));
 
@@ -93,11 +92,13 @@ void send_render_command(int fd, struct image_info* info) {
   radius /= 1.25;
 }
 
+// ffmpeg -framerate 30 -i %05d.png -vf "scale=8000:-1,zoompan=z='zoom+(.25/30)':x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):d=1*30:s=1024x1024:fps=30" -t 200 -c:v libx264 -pix_fmt yuv420p output.mp4
+
 int main() {
   struct image_info info;
 
-  info.size_r = 512;
-  info.size_i = 512;
+  info.size_r = 1024;
+  info.size_i = 1024;
 
   info.iterations = 2000;
 
@@ -130,7 +131,7 @@ int main() {
   int listen_socket = server_setup();
 
   // run all ssh commands
-  for (int i = 1; i < 30; i++) {
+  for (int i = 1; i < 2; i++) {
     lab_run_client(i, "sshkolnik40");
   }
 
@@ -163,10 +164,11 @@ int main() {
     if (FD_ISSET(listen_socket, &read_fds)) {
       printf("Accepted client %d, sending it zoom=%d\n", num_connected_clients, zoom_level);
 
-      connected_clients[num_connected_clients] = server_tcp_handshake(listen_socket);
-      num_connected_clients += 1;
+      int new_client = server_tcp_handshake(listen_socket);
+      send_render_command(new_client, &info);
 
-      send_render_command(connected_clients[num_connected_clients - 1], &info);
+      connected_clients[num_connected_clients] = new_client;
+      num_connected_clients += 1;
     }
 
     for (int i = 0; i < num_connected_clients; i++) {
@@ -174,19 +176,22 @@ int main() {
         continue;
       }
 
-      if (FD_ISSET(connected_clients[i], &read_fds)) {
-        int res;
-        int bytes = read(connected_clients[i], &res, sizeof(res));
-
-        if (bytes == 0) {
-          printf("Client %d disconnected\n", i);
-          connected_clients[i] = -1;
-          continue;
-        }
-
-        printf("Client %d finished, sending it zoom=%d\n", i, zoom_level);
-        send_render_command(connected_clients[i], &info);
+      if (!FD_ISSET(connected_clients[i], &read_fds)) {
+        continue;
       }
+
+      int res;
+      int bytes = read(connected_clients[i], &res, sizeof(res));
+
+      if (bytes == 0) {
+        printf("Client %d disconnected\n", i);
+        connected_clients[i] = -1;
+
+        continue;
+      }
+
+      printf("Client %d finished, sending it zoom=%d\n", i, zoom_level);
+      send_render_command(connected_clients[i], &info);
     }
   }
 }

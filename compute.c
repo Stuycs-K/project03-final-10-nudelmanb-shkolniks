@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
+#include <sys/types.h>
 //#include <gmp.h>
 #include "compute.h"
 #include "libattopng.h"
@@ -25,34 +28,56 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
 }
 
 void render_image(struct image_info* info) {
+  int shmid = shmget(229875612, info->size_r * info->size_i * sizeof(int), IPC_CREAT | 0640);
+  int* data = shmat(shmid, 0, 0);
+
+  int NUM_CHILDREN = 8;
+  for (int child = 0; child < NUM_CHILDREN; child++) {
+    if (fork() == 0) {
+      for (int n = child; n < info->size_r * info->size_i; n += NUM_CHILDREN) {
+        int rc = n % info->size_r;
+        int ic = n / info->size_r;
+
+        double i = info->i_max + ((info->i_min - info->i_max) * ic) / info->size_i;
+        double r = info->r_min + ((info->r_max - info->r_min) * rc) / info->size_r;
+
+        struct complex z;
+        z.r = 0;
+        z.i = 0;
+
+        struct complex c;
+        c.r = r;
+        c.i = i;
+
+        data[n] = iterate(info->iterations, &z, &c);
+      }
+
+      exit(0);
+    }
+  }
+  
+  for (int child = 0; child < NUM_CHILDREN; child++) {
+    wait(NULL);
+  }
+
   libattopng_t* png = libattopng_new(info->size_r, info->size_i, PNG_PALETTE);
   libattopng_set_palette(png, info->palette, 256);
 
-  for (int ic = 0; ic < info->size_i; ic++) {
-    for (int rc = 0; rc < info->size_r; rc++) {
-      double i = info->i_max + ((info->i_min - info->i_max) * ic) / info->size_i;
-      double r = info->r_min + ((info->r_max - info->r_min) * rc) / info->size_r;
+  for (int i = 0; i < info->size_r * info->size_i; i++) {
+    int rc = i % info->size_r;
+    int ic = i / info->size_r;
 
-      struct complex z;
-      z.r = 0;
-      z.i = 0;
-
-      struct complex c;
-      c.r = r;
-      c.i = i;
-
-      int count = iterate(info->iterations, &z, &c);
-
-      if (count == -1) {
-        libattopng_set_pixel(png, rc, ic, 0);
-      } else {
-        libattopng_set_pixel(png, rc, ic, 1 + count % 255);
-      }
+    if (data[i] == -1) {
+      libattopng_set_pixel(png, rc, ic, 0);
+    } else {
+      libattopng_set_pixel(png, rc, ic, 1 + data[i] % 255);
     }
   }
 
   libattopng_save(png, info->out_name);
   libattopng_destroy(png);
+
+  shmctl(shmid, IPC_RMID, 0);
 }
 
 int main(int argc, char *argv[]) {
