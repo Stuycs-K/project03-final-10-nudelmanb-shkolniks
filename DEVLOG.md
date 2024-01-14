@@ -20,6 +20,9 @@ Along with Simon, the code was reformatted for improved readability and unnecess
 ### 2024-01-11 - Changing network structure, more debugging
 The code was all rearranged and slightly modified so that the lab machines will all set up their own servers and each forked child will connect to their corresponding server to recieve information from the Mandelbrot computation. The "address cannot be assigned" error on bind still has not been fixed, though it has been narrowed down. I have spent all of class time and at least 30 minutes at home today.
 
+### 2024-01-(12-16) - Reformatting, fixed errors
+The code was largely reformatted to improve readability. After more extensive debugging, bind was removed and the networking connect functions were revised to remove the original bind address assignment error. There remained a server refused to connect error that was fixed with a sleep on the client side before attempting to connect to the server. Total time was all of class time and approximately 30 minutes at home.
+
 ## Simon
 
 ### 2024-01-02 - Brief description

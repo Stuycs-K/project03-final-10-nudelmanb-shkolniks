@@ -111,7 +111,7 @@ int main(int argc, char *argv[]){
             }  else {
                 // printf("This is child %d\n", current_machine);
                 err(f1, "check5.5");
-
+                sleep(3);
                 char* lab_IP = find_ip("161", i);
                 int lab_socket = connect_machine_net(lab_IP);
                 printf("got to this point\n");
