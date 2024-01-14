@@ -82,5 +82,8 @@ int main(int argc, char *argv[]) {
     printf("\tout width: %d, out height: %d\n", info.size_r, info.size_i);
 
     render_image(&info);
+
+    int success = 1;
+    write(server_socket, &success, sizeof(success));
   }
 }

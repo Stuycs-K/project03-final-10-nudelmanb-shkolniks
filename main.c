@@ -9,7 +9,7 @@
 #include "compute.h"
 
 // gets the ip address for a computer in the lab
-void find_lab_ip(char* out, int machine_number) {
+void get_lab_ip(char* out, int machine_number) {
   sprintf(out, "149.89.161.1%02d", machine_number);
 }
 
@@ -38,50 +38,68 @@ int lab_run_client(int machine_number, char* user){
   get_local_ip(LOCAL_IP);
 
   char LAB_IP[32];
-  find_lab_ip(LAB_IP, machine_number);
-
-  char* args[16];
-  args[0] = "ssh";
+  get_lab_ip(LAB_IP, machine_number);
 
   char sshprompt[256];
   sprintf(sshprompt, "%s@%s", user, LAB_IP);
 
-  char command[256];
-  sprintf(command, "cd Desktop/project03-final-10-nudelmanb-shkolniks; make compute ARGS=\"%s\"", LOCAL_IP);
+  char current_dir[256];
+  getcwd(current_dir, 256);
 
+  char command[512];
+  sprintf(command, "cd %s; ./compute %s", current_dir, LOCAL_IP);
+
+  char* args[16];
+
+  args[0] = "ssh";
   args[1] = sshprompt;
+  
+  // dont ask to confirm host authenticity
   args[2] = "-o";
   args[3] = "StrictHostKeyChecking=no";
+
   args[4] = command;
   args[5] = NULL;
 
   if (fork() == 0) {
-    printf("Running ssh command on %s\n", LOCAL_IP);
+    printf("Attempting to run ssh command on %s\n", LAB_IP);
+
+    // dont print stdout
+    int null = open("/dev/null", O_WRONLY);
+    dup2(null, STDOUT_FILENO);
+
     execvp(args[0], args);
   }
 }
 
+double i_center = 0.022143087552935;
+double r_center = -1.627637309835029;
+
+double radius = 2;
+int zoom_level = 0;
+
+void send_render_command(int fd, struct image_info* info) {
+  info->r_min = r_center - radius;
+  info->i_min = i_center - radius;
+  info->r_max = r_center + radius;
+  info->i_max = i_center + radius;
+
+  sprintf(info->out_name, "%05d.png", zoom_level);
+  printf("out name: %s\n", info->out_name);
+
+  write(fd, info, sizeof(*info));
+
+  zoom_level += 1;
+  radius /= 1.25;
+}
+
 int main() {
-  printf("Starting server\n");
-  
-  int listen_socket = server_setup(); 
-
-  lab_run_client(10, "sshkolnik40");
-
-  int client_socket = server_tcp_handshake(listen_socket);
-
   struct image_info info;
-
-  info.r_min = -2;
-  info.i_min = -2;
-  info.r_max = 2;
-  info.i_max = 2;
 
   info.size_r = 512;
   info.size_i = 512;
 
-  info.iterations = 500;
-  strcpy(info.out_name, "test.png");
+  info.iterations = 2000;
 
   info.palette[0] = RGB(0, 0, 0);
   for (int i = 0; i < 255; i++) {
@@ -108,5 +126,67 @@ int main() {
     info.palette[i + 1] = RGB(r, g, b);
   }
 
-  write(client_socket, &info, sizeof(info));
+  printf("Starting server\n");
+  int listen_socket = server_setup();
+
+  // run all ssh commands
+  for (int i = 1; i < 30; i++) {
+    lab_run_client(i, "sshkolnik40");
+  }
+
+  int connected_clients[100];
+  int num_connected_clients = 0;
+
+  fd_set read_fds;
+
+  while (zoom_level < 200) {
+    FD_ZERO(&read_fds);
+
+    // add listen_socket and all connected clients to read_fds
+    int max_fd = listen_socket;
+
+    FD_SET(listen_socket, &read_fds);
+    for (int i = 0; i < num_connected_clients; i++) {
+      if (connected_clients[i] == -1) {
+        continue;
+      }
+
+      FD_SET(connected_clients[i], &read_fds);
+
+      if (connected_clients[i] > max_fd) {
+        max_fd = connected_clients[i];
+      }
+    }
+
+    int num_ready = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+
+    if (FD_ISSET(listen_socket, &read_fds)) {
+      printf("Accepted client %d, sending it zoom=%d\n", num_connected_clients, zoom_level);
+
+      connected_clients[num_connected_clients] = server_tcp_handshake(listen_socket);
+      num_connected_clients += 1;
+
+      send_render_command(connected_clients[num_connected_clients - 1], &info);
+    }
+
+    for (int i = 0; i < num_connected_clients; i++) {
+      if (connected_clients[i] == -1) {
+        continue;
+      }
+
+      if (FD_ISSET(connected_clients[i], &read_fds)) {
+        int res;
+        int bytes = read(connected_clients[i], &res, sizeof(res));
+
+        if (bytes == 0) {
+          printf("Client %d disconnected\n", i);
+          connected_clients[i] = -1;
+          continue;
+        }
+
+        printf("Client %d finished, sending it zoom=%d\n", i, zoom_level);
+        send_render_command(connected_clients[i], &info);
+      }
+    }
+  }
 }
