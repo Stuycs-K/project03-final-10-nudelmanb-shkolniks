@@ -67,34 +67,55 @@ int lab_run_client(int machine_number, char* user){
     // dont print stdout
     int null = open("/dev/null", O_WRONLY);
     dup2(null, STDOUT_FILENO);
+    dup2(null, STDERR_FILENO);
 
     execvp(args[0], args);
   }
 }
 
-double i_center = 0.022143087552935;
-double r_center = -1.627637309835029;
+mpf_t i_center;
+mpf_t r_center;
+mpf_t radius;
+mpf_t zoom_step;
 
-double radius = 2;
 int zoom_level = 0;
 
 void send_render_command(int fd, struct image_info* info) {
-  info->r_min = r_center - radius;
-  info->i_min = i_center - radius;
-  info->r_max = r_center + radius;
-  info->i_max = i_center + radius;
+  mpf_t temp;
+  mpf_init(temp);
+
+  mpf_sub(temp, r_center, radius);
+  mpf_get_str(info->r_min, NULL, 10, 126, temp);
+
+  mpf_add(temp, r_center, radius);
+  mpf_get_str(info->r_max, NULL, 10, 126, temp);
+
+  mpf_sub(temp, i_center, radius);
+  mpf_get_str(info->i_min, NULL, 10, 126, temp);
+
+  mpf_add(temp, i_center, radius);
+  mpf_get_str(info->i_max, NULL, 10, 126, temp);
 
   sprintf(info->out_name, "%05d.png", zoom_level);
 
   write(fd, info, sizeof(*info));
 
   zoom_level += 1;
-  radius /= 1.25;
+  mpf_div(radius, radius, zoom_step) /= 1.25;
+
+  mpf_clear(temp);
 }
 
 // ffmpeg -framerate 30 -i %05d.png -vf "scale=8000:-1,zoompan=z='zoom+(.25/30)':x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):d=1*30:s=1024x1024:fps=30" -t 200 -c:v libx264 -pix_fmt yuv420p output.mp4
 
 int main() {
+  mpf_set_default_prec(FLOAT_PREC);
+  
+  mpf_init_set_str(i_center, "0.0221430875528949254310014323512713678418050022872873");
+  mpf_init_set_str(r_center, "-1.6276373098350697446845033794984122127942763097610287");
+  mpf_init_set_ui(radius, 2);
+  mpf_init_set_str(zoom_step, "1.25");
+
   struct image_info info;
 
   info.size_r = 1024;

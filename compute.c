@@ -12,18 +12,43 @@
 
 // iterate z^2 + c iterations times
 int iterate(int iterations, struct complex* z, struct complex* c) {
+  mpf_t r_copy;
+  mpf_t i_copy;
+  mpf_t mag;
+
+  mpf_init_set(r_copy, z->r); //r_copy = z.r
+  mpf_init_set(i_copy, z->i); //i_copy = z.i
+  mpf_init(mag);
+
   for (int i = 0; i < iterations; i++) {
-    double r_copy = z->r * z->r - z->i * z->i;
-    double i_copy = 2 * z->r * z->i;
+    mpf_pow_ui(r_copy, 2); //r_copy **= 2
+    mpf_pow_ui(i_copy, 2); //i_copy **= 2
 
-    z->r = r_copy + c->r;
-    z->i = i_copy + c->i;
+    mpf_set_ui(mag, 0); //mag = 0
+    mpf_add(mag, r_copy); //mag += r_copy
+    mpf_add(mag, i_copy); //mag += i_copy
 
-    if (z->r * z->r + z->i * z->i >= 2 * 2) {
-      return i + 1;
+    if (mpf_cmp_ui(mag, 2 * 2) >= 0) {
+      return i;
     }
+
+    mpf_sub(r_copy, r_copy, i_copy); //r_copy -= i_copy
+
+    mpf_set_ui(i_copy, 2); //i_copy = 2
+    mpf_mul(i_copy, i_copy, z->r); //i_copy *= z.r
+    mpf_mul(i_copy, i_copy, z->i); //i_copy *= z.i
+
+    mpf_add(r_copy, r_copy, c->r); //r_copy += c.r
+    mpf_add(i_copy, i_copy, c->i); //i_copy += c.i
+
+    mpf_set(z->r, r_copy); //z.r = z_copy
+    mpf_set(z->i, i_copy); //z.i = i_copy
   }
 
+  mpf_clear(r_copy);
+  mpf_clear(i_copy);
+  mpf_clear(mag);
+  
   return -1;
 }
 
@@ -34,20 +59,44 @@ void render_image(struct image_info* info) {
   int NUM_CHILDREN = 8;
   for (int child = 0; child < NUM_CHILDREN; child++) {
     if (fork() == 0) {
+      mpf_set_default_prec(FLOAT_PREC);
+
+      struct complex z;
+      mpf_init(z.r);
+      mpf_init(z.i);
+
+      struct complex c;
+      mpf_init(c.r);
+      mpf_init(c.i);
+
+      struct complex bottom_left;
+      mpf_init_set_str(bottom_left.r, info->r_min, 10);
+      mpf_init_set_str(bottom_left.i, info->i_min, 10);
+
+      struct complex step;
+      mpf_init_set_str(step.r, info->r_max, 10);
+      mpf_init_set_str(step.i, info->i_max, 10);
+
+      mpf_sub(step.r, step.r, bottom_left.r);
+      mpf_sub(step.i, step.i, bottom_left.i);
+
+      mpf_div_ui(step.r, step.r, info->size_r - 1);
+      mpf_div_ui(step.i, step.i, info->size_i - 1);
+
       for (int n = child; n < info->size_r * info->size_i; n += NUM_CHILDREN) {
         int rc = n % info->size_r;
         int ic = n / info->size_r;
 
-        double i = info->i_max + ((info->i_min - info->i_max) * ic) / info->size_i;
-        double r = info->r_min + ((info->r_max - info->r_min) * rc) / info->size_r;
+        mpf_set(c.r, step.r);
+        mpf_mul_ui(c.r, c.r, rc);
+        mpf_add(c.r, c.r, bottom_left.r);
 
-        struct complex z;
-        z.r = 0;
-        z.i = 0;
+        mpf_set(c.i, step.i);
+        mpf_mul_ui(c.i, c.i, ic);
+        mpf_add(c.i, c.i, bottom_left.i);
 
-        struct complex c;
-        c.r = r;
-        c.i = i;
+        mpf_set_ui(z.r, 0);
+        mpf_set_ui(z.i, 0);
 
         data[n] = iterate(info->iterations, &z, &c);
       }

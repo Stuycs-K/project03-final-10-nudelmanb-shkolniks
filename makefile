@@ -5,8 +5,8 @@ main: compile
 	@./main $(ARGS)
 
 compile: compute.o main.o libattopng.o networking.o
-	@gcc -o compute compute.o libattopng.o networking.o
-	@gcc -o main main.o networking.o
+	@gcc -o compute compute.o libattopng.o networking.o -lgmp
+	@gcc -o main main.o networking.o -lgmp
 
 main.o: main.c networking.h compute.h
 	@gcc -c main.c
