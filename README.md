@@ -4,7 +4,8 @@
 ### The Mandelbros
 
 Simon Shkolnik
-       
+Benjamin Nudelman
+
 ### Project Description:
 
 The user will be able to quickly create a "zoom" of the mandlebrot set by distributing the workload to all computers in the CS lab.
@@ -18,5 +19,4 @@ The user runs the program by running `make main` and passing the desired locatio
 ### Libraries Used:
 
 * GNU MP - Library for multiprecision float arithmetic and arbitrary sized integers. Seperate installation required, compile final executable with `-lgmp` flag in GCC.
-
 * libattopng - Easiest library for writing PNGs that I could find. Only one .c and .h file, to compile just compile the library source into a .o file and link.
