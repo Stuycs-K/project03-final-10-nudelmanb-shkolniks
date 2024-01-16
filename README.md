@@ -1,21 +1,22 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/SQs7pKlr)
-# Multi-Computer Mandelbrot Visualizer
+# Multi-Computer Mandelbrot Renderer
 
 ### The Mandelbros
 
 Simon Shkolnik
-
 Benjamin Nudelman
-       
+
 ### Project Description:
 
-This project attempts to create a faster method for computing and visualizing the MandelBrot set by splitting up the computation amongst all the computers in our CS lab. Our main computer (likely marge), forks enough pairs of children such that one child uses ssh to log into its corresponding lab machine number and the other child sets up a server for the lab machine to connect to. Once that is done, the lab machine can send over pixel colors to the main computer to construct an image file of the Mandelbrot set.
-  
+The user will be able to quickly create a "zoom" of the mandlebrot set by distributing the workload to all computers in the CS lab.
+
 ### Instructions:
 
-How does the user install/compile/run the program.
+Both the main and client excecutables will be compiled with `make compile` and can be ran with `make main` and `make compute` respectively, though the compute program is not meant to be run by the user.
 
-make compile is used to compile the program
+The user runs the program by running `make main` and passing the desired location and zoom depth as command line arguments, as well as other options such as iteration count, the amount to zoom in by each frame, etc.
 
+### Libraries Used:
 
-How does the user interact with this program?
+* GNU MP - Library for multiprecision float arithmetic and arbitrary sized integers. Seperate installation required, compile final executable with `-lgmp` flag in GCC.
+* libattopng - Easiest library for writing PNGs that I could find. Only one .c and .h file, to compile just compile the library source into a .o file and link.
