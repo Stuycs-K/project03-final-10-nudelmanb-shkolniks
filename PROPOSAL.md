@@ -8,15 +8,15 @@ Benjamin Nudelman
        
 # Intentions:
 
-We intend to create a distributed computing tool to construct an image of a subportion of the Mandelbrot set (the portion chosen by the user).
+We intend to create a distributed computing tool to construct an video of zooming into a subportion of the Mandelbrot set as chosen by the user.
     
 # Intended usage:
 
-The user will have to choose minimum and maximum x and y coordinates for the computers to assemble the graph, as well as other optional arguments such as max iteration count and coloring method.
+The user will have to choose coordinates to zoom into and zoom level for the computers to assemble a series of images, as well as other optional arguments such as max iteration count and coloring method. The user can then easily convert the series of images into a video with various tools such as FFmpeg.
   
 # Technical Details:
 
-Our project will be run by a main server computer, that will SSH into every computer in the lab and have each computer run a "client" computing program that communicates with and is given instructions by the main server. Each client will be given a section of the image to compute, and send its results back to the main computer, where it will be reconstructed and outputed to an image file. Ideally, the server program won't be run for every image output as there is a large amount of overhead, and the user will be able to continuously enter new coordinates to render.
+Our project will be run by a main server computer which will create a TCP server and then SSH into every computer in the lab and have each computer run a "client" computing program that communicates with and is given instructions by the main server. Each client will be given a section of the set to compute, and output its image to a directory, taking advantage of Stuy's shared file system. For the program to work with non-connected computers, all that would need to be changed is that the client sends the image data to the server over the TCP connection.
 
 ## Topics used:
 
@@ -24,15 +24,11 @@ Our project will be run by a main server computer, that will SSH into every comp
 
 -allocating memory (likely for strings, communication)
 
--shared memory (between all the children that communicate with each client socket)
+-shared memory (client process is multithreaded, children all work on same shared memory)
 
--processes (fork to create children)
+-processes (fork to create children in client process to speed up computation, running SSH command)
 
--working with files (image output, potentially will be in a script to download an executable file from github on the lab machines)
-
--semaphores (will be used to determine when all clients are done computing)
-
--signals (for error handling, potentially to end the program if we choose to make the program constantly update the image file)
+-working with files (image output)
 
 ## Project Breakdown:
 
@@ -44,13 +40,13 @@ Our project will be run by a main server computer, that will SSH into every comp
 
 -a function that calculates the data from the Mandelbrot set for a specific pixel (Simon)
 
--a function that writes to the proper data to the image file once the communication is complete (Ben)
+-a function that writes to the proper data to the image file once the communication is complete (Simon)
 
--a script that logs us in and downloads the executable file on each lab machine (Simon)
+-a script that logs us in and runs the executable file on each lab machine (Ben)
   
 ## Data structures / Algorithms:
 
--Shared memory - there will be one large continuous chunk of shared memory, and each client will be given a section to compute
+-Shared memory - there will be one large continuous chunk of shared memory, and each of the client's threads will be given a section to compute
 
 -Mandlebrot set - mandlebrot set will be computed via an escape-time algorithm and colored according to some kind of histogram
 
