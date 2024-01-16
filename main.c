@@ -66,8 +66,8 @@ int lab_run_client(int machine_number, char* user){
 
     // dont print stdout
     int null = open("/dev/null", O_WRONLY);
-    dup2(null, STDOUT_FILENO);
-    dup2(null, STDERR_FILENO);
+    //dup2(null, STDOUT_FILENO);
+    //dup2(null, STDERR_FILENO);
 
     execvp(args[0], args);
   }
@@ -101,7 +101,7 @@ void send_render_command(int fd, struct image_info* info) {
   write(fd, info, sizeof(*info));
 
   zoom_level += 1;
-  mpf_div(radius, radius, zoom_step) /= 1.25;
+  mpf_div(radius, radius, zoom_step);
 
   mpf_clear(temp);
 }
@@ -111,10 +111,10 @@ void send_render_command(int fd, struct image_info* info) {
 int main() {
   mpf_set_default_prec(FLOAT_PREC);
   
-  mpf_init_set_str(i_center, "0.0221430875528949254310014323512713678418050022872873");
-  mpf_init_set_str(r_center, "-1.6276373098350697446845033794984122127942763097610287");
+  mpf_init_set_str(i_center, "0.0221430875528949254310014323512713678418050022872873", 10);
+  mpf_init_set_str(r_center, "-1.6276373098350697446845033794984122127942763097610287", 10);
   mpf_init_set_ui(radius, 2);
-  mpf_init_set_str(zoom_step, "1.25");
+  mpf_init_set_str(zoom_step, "1.25", 10);
 
   struct image_info info;
 
@@ -152,7 +152,7 @@ int main() {
   int listen_socket = server_setup();
 
   // run all ssh commands
-  for (int i = 1; i < 2; i++) {
+  for (int i = 1; i < 10; i++) {
     lab_run_client(i, "sshkolnik40");
   }
 
@@ -161,7 +161,7 @@ int main() {
 
   fd_set read_fds;
 
-  while (zoom_level < 200) {
+  while (zoom_level < 10) {
     FD_ZERO(&read_fds);
 
     // add listen_socket and all connected clients to read_fds

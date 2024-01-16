@@ -21,12 +21,12 @@ int iterate(int iterations, struct complex* z, struct complex* c) {
   mpf_init(mag);
 
   for (int i = 0; i < iterations; i++) {
-    mpf_pow_ui(r_copy, 2); //r_copy **= 2
-    mpf_pow_ui(i_copy, 2); //i_copy **= 2
+    mpf_pow_ui(r_copy, r_copy, 2); //r_copy **= 2
+    mpf_pow_ui(i_copy, i_copy, 2); //i_copy **= 2
 
     mpf_set_ui(mag, 0); //mag = 0
-    mpf_add(mag, r_copy); //mag += r_copy
-    mpf_add(mag, i_copy); //mag += i_copy
+    mpf_add(mag, mag, r_copy); //mag += r_copy
+    mpf_add(mag, mag, i_copy); //mag += i_copy
 
     if (mpf_cmp_ui(mag, 2 * 2) >= 0) {
       return i;
@@ -59,8 +59,6 @@ void render_image(struct image_info* info) {
   int NUM_CHILDREN = 8;
   for (int child = 0; child < NUM_CHILDREN; child++) {
     if (fork() == 0) {
-      mpf_set_default_prec(FLOAT_PREC);
-
       struct complex z;
       mpf_init(z.r);
       mpf_init(z.i);
@@ -130,6 +128,8 @@ void render_image(struct image_info* info) {
 }
 
 int main(int argc, char *argv[]) {
+  mpf_set_default_prec(FLOAT_PREC);
+  
   char* IP = "127.0.0.1";
   if (argc > 1) {
     IP = argv[1];
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Recieved compute command:\n");
-    printf("\tcoordinates: %f + %fi to %f + %fi\n", info.r_min, info.i_min, info.r_max, info.i_max);
+    printf("\tcoordinates: %s + %si to %s + %si\n", info.r_min, info.i_min, info.r_max, info.i_max);
     printf("\titerations: %d, out name: %s\n", info.iterations, info.out_name);
     printf("\tout width: %d, out height: %d\n", info.size_r, info.size_i);
 
