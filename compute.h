@@ -5,8 +5,9 @@
 #define RGBA(r, g, b, a) ((r) | ((g) << 8) | ((b) << 16) | ((a) << 24))
 #define RGB(r, g, b) RGBA(r, g, b, 0xff)
 
-#include <gmp.h>
-#define FLOAT_PREC 128
+//#include <gmp.h>
+//#define FLOAT_PREC 128
+#define mpf_t double
 
 struct complex {
   mpf_t r;
@@ -14,11 +15,11 @@ struct complex {
 };
 
 struct image_info {
-  char r_min[128];
-  char i_min[128];
+  mpf_t r_min;
+  mpf_t i_min;
 
-  char r_max[128];
-  char i_max[128];
+  mpf_t r_max;
+  mpf_t i_max;
 
   int iterations;
   int palette[256];
