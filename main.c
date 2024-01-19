@@ -66,56 +66,35 @@ int lab_run_client(int machine_number, char* user){
 
     // dont print stdout
     int null = open("/dev/null", O_WRONLY);
-    //dup2(null, STDOUT_FILENO);
-    //dup2(null, STDERR_FILENO);
+    dup2(null, STDOUT_FILENO);
 
     execvp(args[0], args);
   }
 }
 
-mpf_t i_center;
-mpf_t r_center;
-mpf_t radius;
-mpf_t zoom_step;
+double i_center = 0.022143087552935;
+double r_center = -1.627637309835029;
 
+double radius = 2;
 int zoom_level = 0;
 
 void send_render_command(int fd, struct image_info* info) {
-  mpf_t temp;
-  mpf_init(temp);
-
-  mpf_sub(temp, r_center, radius);
-  mpf_get_str(info->r_min, NULL, 10, 126, temp);
-
-  mpf_add(temp, r_center, radius);
-  mpf_get_str(info->r_max, NULL, 10, 126, temp);
-
-  mpf_sub(temp, i_center, radius);
-  mpf_get_str(info->i_min, NULL, 10, 126, temp);
-
-  mpf_add(temp, i_center, radius);
-  mpf_get_str(info->i_max, NULL, 10, 126, temp);
+  info->r_min = r_center - radius;
+  info->i_min = i_center - radius;
+  info->r_max = r_center + radius;
+  info->i_max = i_center + radius;
 
   sprintf(info->out_name, "%05d.png", zoom_level);
 
   write(fd, info, sizeof(*info));
 
   zoom_level += 1;
-  mpf_div(radius, radius, zoom_step);
-
-  mpf_clear(temp);
+  radius /= 1.25;
 }
 
 // ffmpeg -framerate 30 -i %05d.png -vf "scale=8000:-1,zoompan=z='zoom+(.25/30)':x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):d=1*30:s=1024x1024:fps=30" -t 200 -c:v libx264 -pix_fmt yuv420p output.mp4
 
 int main() {
-  mpf_set_default_prec(FLOAT_PREC);
-  
-  mpf_init_set_str(i_center, "0.0221430875528949254310014323512713678418050022872873", 10);
-  mpf_init_set_str(r_center, "-1.6276373098350697446845033794984122127942763097610287", 10);
-  mpf_init_set_ui(radius, 2);
-  mpf_init_set_str(zoom_step, "1.25", 10);
-
   struct image_info info;
 
   info.size_r = 1024;
@@ -152,7 +131,7 @@ int main() {
   int listen_socket = server_setup();
 
   // run all ssh commands
-  for (int i = 1; i < 10; i++) {
+  for (int i = 1; i < 30; i++) {
     lab_run_client(i, "sshkolnik40");
   }
 
@@ -161,7 +140,7 @@ int main() {
 
   fd_set read_fds;
 
-  while (zoom_level < 10) {
+  while (zoom_level < 200) {
     FD_ZERO(&read_fds);
 
     // add listen_socket and all connected clients to read_fds
