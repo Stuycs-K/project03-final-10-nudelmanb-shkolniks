@@ -21,4 +21,4 @@ networking.o: networking.c networking.h
 	@gcc -c networking.c
 
 clean:
-	@rm -f compute *.o *.png
+	@rm -f compute main *.o *.png

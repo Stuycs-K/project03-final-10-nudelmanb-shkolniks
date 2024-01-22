@@ -74,6 +74,7 @@ int lab_run_client(int machine_number, char* user){
 
 double i_center = 0.022143087552935;
 double r_center = -1.627637309835029;
+int max_zoom_level = 150;
 
 double radius = 2;
 int zoom_level = 0;
@@ -94,7 +95,18 @@ void send_render_command(int fd, struct image_info* info) {
 
 // ffmpeg -framerate 30 -i %05d.png -vf "scale=8000:-1,zoompan=z='zoom+(.25/30)':x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):d=1*30:s=1024x1024:fps=30" -t 200 -c:v libx264 -pix_fmt yuv420p output.mp4
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc != 4 && argc != 1) {
+    printf("Please enter either 3 or no arguments: <r> <i> <number of images>\n");
+    return 1;
+  }
+
+  if (argc == 4) {
+    sscanf(argv[1], "%lf", &r_center);
+    sscanf(argv[2], "%lf", &i_center);
+    sscanf(argv[3], "%d", &max_zoom_level);
+  }
+
   struct image_info info;
 
   info.size_r = 1024;
@@ -140,7 +152,7 @@ int main() {
 
   fd_set read_fds;
 
-  while (zoom_level < 200) {
+  while (zoom_level < max_zoom_level) {
     FD_ZERO(&read_fds);
 
     // add listen_socket and all connected clients to read_fds
