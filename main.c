@@ -67,6 +67,7 @@ int lab_run_client(int machine_number, char* user){
     // dont print stdout
     int null = open("/dev/null", O_WRONLY);
     dup2(null, STDOUT_FILENO);
+    dup2(null, STDERR_FILENO);
 
     execvp(args[0], args);
   }
